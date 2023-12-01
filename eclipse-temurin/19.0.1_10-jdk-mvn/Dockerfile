@@ -5,3 +5,6 @@ RUN cd /usr/local \
 	&& tar xzf apache-maven-3.9.5-bin.tar.gz \
 	&& ln -sf /usr/local/apache-maven-3.9.5/bin/mvn /usr/local/bin/mvn \
 	&& rm -rf /usr/local/apache-maven-3.9.5-bin.tar.gz
+
+RUN apt update && apt install -y make \
+	&& rm -rf /var/lib/apt/lists/*
