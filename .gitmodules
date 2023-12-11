@@ -1,0 +1,3 @@
+[submodule "static-healthcheck/static-healthcheck"]
+	path = static-healthcheck/static-healthcheck
+	url = https://github.com/wtfcoderz/static-healthcheck
