@@ -5,7 +5,6 @@ scriptPath=$(cd $(dirname "$0") && pwd)
 cd TIME-SEA-chatgpt
 commitID=$(git rev-parse HEAD)
 platforms=linux/amd64,linux/arm64/v8
-platforms=linux/amd64
 
 image=minixxie/time-sea-chatgpt-web
 cd Web/
