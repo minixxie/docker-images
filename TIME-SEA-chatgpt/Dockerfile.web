@@ -1,0 +1,15 @@
+FROM node:16 AS builder
+
+WORKDIR /app
+
+ADD . .
+
+RUN npm config set registry https://registry.npmmirror.com \
+    && npm install \
+    && npm run build
+
+FROM nginx:1.25.3-alpine3.18
+
+WORKDIR /usr/share/nginx/html/
+
+COPY --from=builder /app/dist /usr/share/nginx/html

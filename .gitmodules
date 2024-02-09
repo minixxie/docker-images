@@ -1,3 +1,6 @@
 [submodule "static-healthcheck/static-healthcheck"]
 	path = static-healthcheck/static-healthcheck
 	url = https://github.com/wtfcoderz/static-healthcheck
+[submodule "TIME-SEA-chatgpt/TIME-SEA-chatgpt"]
+	path = TIME-SEA-chatgpt/TIME-SEA-chatgpt
+	url = https://github.com/dulaiduwang003/TIME-SEA-chatgpt.git
