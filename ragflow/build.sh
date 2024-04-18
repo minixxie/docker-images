@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 push=1
 
 scriptPath=$(cd $(dirname "$0") && pwd)
@@ -18,8 +20,8 @@ nerdctl tag $image:$commitID $image:latest
 
 if [ $push -eq 1 ]; then
 	nerdctl login
-	nerdctl push --platform $platforms $image:$commitID
-	nerdctl push --platform $platforms $image:latest
+	nerdctl --namespace=k8s.io push --platform $platforms $image:$commitID
+	nerdctl --namespace=k8s.io push --platform $platforms $image:latest
 fi
 
 image=minixxie/ragflow
@@ -34,6 +36,6 @@ nerdctl tag $image:$commitID $image:latest
 
 if [ $push -eq 1 ]; then
 	nerdctl login
-	nerdctl push --platform $platforms $image:$commitID
-	nerdctl push --platform $platforms $image:latest
+	nerdctl --namespace=k8s.io push --platform $platforms $image:$commitID
+	nerdctl --namespace=k8s.io push --platform $platforms $image:latest
 fi
