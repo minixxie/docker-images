@@ -4,3 +4,6 @@
 [submodule "TIME-SEA-chatgpt/TIME-SEA-chatgpt"]
 	path = TIME-SEA-chatgpt/TIME-SEA-chatgpt
 	url = https://github.com/dulaiduwang003/TIME-SEA-chatgpt.git
+[submodule "ragflow/ragflow"]
+	path = ragflow/ragflow
+	url = https://github.com/infiniflow/ragflow.git
