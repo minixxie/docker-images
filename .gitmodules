@@ -7,3 +7,6 @@
 [submodule "ragflow/ragflow"]
 	path = ragflow/ragflow
 	url = https://github.com/infiniflow/ragflow.git
+[submodule "omniparse/omniparse"]
+	path = omniparse/omniparse
+	url = https://github.com/adithya-s-k/omniparse.git

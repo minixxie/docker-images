@@ -12,3 +12,4 @@ build:
 	cd xxl-job-admin/2.3.1 && ./build.sh && cd -
 	cd privateGPT && ./build.sh && cd -
 	cd ragflow && ./build.sh && cd -
+	cd omniparse && ./build.sh && cd -
