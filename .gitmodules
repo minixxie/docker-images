@@ -10,3 +10,6 @@
 [submodule "omniparse/omniparse"]
 	path = omniparse/omniparse
 	url = https://github.com/adithya-s-k/omniparse.git
+[submodule "minixxie-llamacoder/llamacoder"]
+	path = minixxie-llamacoder/llamacoder
+	url = https://github.com/minixxie/llamacoder.git

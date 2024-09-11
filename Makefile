@@ -14,3 +14,4 @@ build:
 	cd ragflow && ./build.sh && cd -
 	cd omniparse && ./build.sh && cd -
 	cd nutlope-ollamacoder && ./build.sh && cd -
+	cd minixxie-ollamacoder && ./build.sh && cd -
