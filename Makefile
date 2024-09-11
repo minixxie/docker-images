@@ -13,3 +13,4 @@ build:
 	cd privateGPT && ./build.sh && cd -
 	cd ragflow && ./build.sh && cd -
 	cd omniparse && ./build.sh && cd -
+	cd nutlope-ollamacoder && ./build.sh && cd -

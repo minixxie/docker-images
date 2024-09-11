@@ -1,0 +1,18 @@
+FROM node:18.20.4-alpine3.20
+
+RUN apk add --no-cache git
+
+WORKDIR /usr/src/app
+ARG GIT_COMMIT_ID
+RUN git init \
+	&& git remote add origin https://github.com/Nutlope/llamacoder.git \
+	&& git fetch --depth 1 origin $GIT_COMMIT_ID \
+	&& git checkout FETCH_HEAD
+
+RUN npm install
+RUN npx next build
+
+EXPOSE 80
+ENV PORT=80
+
+CMD ["npm", "run", "start"]
