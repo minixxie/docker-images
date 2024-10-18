@@ -1,0 +1,274 @@
+## golang - https://github.com/minixxie/docker-images/blob/main/golang%401.21.0/Dockerfile
+FROM --platform=$TARGETPLATFORM alpine:3.18.4 as protoc
+ARG TARGETPLATFORM
+ARG TARGETARCH
+ARG BUILDPLATFORM
+
+ENV PROTOC_VER 24.4
+
+WORKDIR /tmp
+RUN \
+	if [ ${TARGETARCH} == arm64 ]; then \
+		wget -O /tmp/protoc.zip \
+		https://github.com/google/protobuf/releases/download/v${PROTOC_VER}/protoc-${PROTOC_VER}-linux-aarch_64.zip; \
+	elif [ ${TARGETARCH} == amd64 ]; then \
+		wget -O /tmp/protoc.zip \
+		https://github.com/google/protobuf/releases/download/v${PROTOC_VER}/protoc-${PROTOC_VER}-linux-x86_64.zip; \
+	else \
+		echo >&2 "ERR: unsupported architecture."; exit 1; \
+	fi
+
+RUN mkdir -p /tmp/protoc && cd /tmp/protoc && unzip ../protoc.zip && tar czf /tmp/protoc.tar.gz *
+
+
+## golang - https://github.com/docker-library/golang/blob/89de06f6dd2c4edb29f33bb7270bdcc8000cf58a/1.23/bullseye/Dockerfile
+FROM buildpack-deps:bullseye-scm AS golangbuild
+
+ENV PATH /usr/local/go/bin:$PATH
+
+ENV GOLANG_VERSION 1.23.2
+
+RUN set -eux; \
+	now="$(date '+%s')"; \
+	arch="$(dpkg --print-architecture)"; arch="${arch##*-}"; \
+	url=; \
+	case "$arch" in \
+		'amd64') \
+			url='https://dl.google.com/go/go1.23.2.linux-amd64.tar.gz'; \
+			sha256='542d3c1705f1c6a1c5a80d5dc62e2e45171af291e755d591c5e6531ef63b454e'; \
+			;; \
+		'armhf') \
+			url='https://dl.google.com/go/go1.23.2.linux-armv6l.tar.gz'; \
+			sha256='e3286bdde186077e65e961cbe18874d42a461e5b9c472c26572b8d4a98d15c40'; \
+			;; \
+		'arm64') \
+			url='https://dl.google.com/go/go1.23.2.linux-arm64.tar.gz'; \
+			sha256='f626cdd92fc21a88b31c1251f419c17782933a42903db87a174ce74eeecc66a9'; \
+			;; \
+		'i386') \
+			url='https://dl.google.com/go/go1.23.2.linux-386.tar.gz'; \
+			sha256='cb1ed4410f68d8be1156cee0a74fcfbdcd9bca377c83db3a9e1b07eebc6d71ef'; \
+			;; \
+		'mips64el') \
+			url='https://dl.google.com/go/go1.23.2.linux-mips64le.tar.gz'; \
+			sha256='2283d12dfe7c8c8a46a41bbf7d11fe007434e7590cd1b89e221e478640b7ee3a'; \
+			;; \
+		'ppc64el') \
+			url='https://dl.google.com/go/go1.23.2.linux-ppc64le.tar.gz'; \
+			sha256='c164ce7d894b10fd861d7d7b96f1dbea3f993663d9f0c30bc4f8ae3915db8b0c'; \
+			;; \
+		'riscv64') \
+			url='https://dl.google.com/go/go1.23.2.linux-riscv64.tar.gz'; \
+			sha256='ea8ab49c5c04c9f94a3f4894d1b030fbce8d10413905fa399f6c39c0a44d5556'; \
+			;; \
+		's390x') \
+			url='https://dl.google.com/go/go1.23.2.linux-s390x.tar.gz'; \
+			sha256='de1f94d7dd3548ba3036de1ea97eb8243881c22a88fcc04cc08c704ded769e02'; \
+			;; \
+		*) echo >&2 "error: unsupported architecture '$arch' (likely packaging update needed)"; exit 1 ;; \
+	esac; \
+	\
+	wget -O go.tgz.asc "$url.asc"; \
+	wget -O go.tgz "$url" --progress=dot:giga; \
+	echo "$sha256 *go.tgz" | sha256sum -c -; \
+	\
+# https://github.com/golang/go/issues/14739#issuecomment-324767697
+	GNUPGHOME="$(mktemp -d)"; export GNUPGHOME; \
+# https://www.google.com/linuxrepositories/
+	gpg --batch --keyserver keyserver.ubuntu.com --recv-keys 'EB4C 1BFD 4F04 2F6D DDCC  EC91 7721 F63B D38B 4796'; \
+# let's also fetch the specific subkey of that key explicitly that we expect "go.tgz.asc" to be signed by, just to make sure we definitely have it
+	gpg --batch --keyserver keyserver.ubuntu.com --recv-keys '2F52 8D36 D67B 69ED F998  D857 78BD 6547 3CB3 BD13'; \
+	gpg --batch --verify go.tgz.asc go.tgz; \
+	gpgconf --kill all; \
+	rm -rf "$GNUPGHOME" go.tgz.asc; \
+	\
+	tar -C /usr/local -xzf go.tgz; \
+	rm go.tgz; \
+	\
+# save the timestamp from the tarball so we can restore it for reproducibility, if necessary (see below)
+	SOURCE_DATE_EPOCH="$(stat -c '%Y' /usr/local/go)"; \
+	export SOURCE_DATE_EPOCH; \
+	touchy="$(date -d "@$SOURCE_DATE_EPOCH" '+%Y%m%d%H%M.%S')"; \
+# for logging validation/edification
+	date --date "@$SOURCE_DATE_EPOCH" --rfc-2822; \
+# sanity check (detected value should be older than our wall clock)
+	[ "$SOURCE_DATE_EPOCH" -lt "$now" ]; \
+	\
+	if [ "$arch" = 'armhf' ]; then \
+		[ -s /usr/local/go/go.env ]; \
+		before="$(go env GOARM)"; [ "$before" != '7' ]; \
+		{ \
+			echo; \
+			echo '# https://github.com/docker-library/golang/issues/494'; \
+			echo 'GOARM=7'; \
+		} >> /usr/local/go/go.env; \
+		after="$(go env GOARM)"; [ "$after" = '7' ]; \
+# (re-)clamp timestamp for reproducibility (allows "COPY --link" to be more clever/useful)
+		touch -t "$touchy" /usr/local/go/go.env /usr/local/go; \
+	fi; \
+	\
+# ideally at this point, we would just "COPY --link ... /usr/local/go/ /usr/local/go/" but BuildKit insists on creating the parent directories (perhaps related to https://github.com/opencontainers/image-spec/pull/970), and does so with unreproducible timestamps, so we instead create a whole new "directory tree" that we can "COPY --link" to accomplish what we want
+	mkdir /target /target/usr /target/usr/local; \
+	mv -vT /usr/local/go /target/usr/local/go; \
+	ln -svfT /target/usr/local/go /usr/local/go; \
+	touch -t "$touchy" /target/usr/local /target/usr /target; \
+	\
+# smoke test
+	go version; \
+# make sure our reproducibile timestamp is probably still correct (best-effort inline reproducibility test)
+	epoch="$(stat -c '%Y' /target/usr/local/go)"; \
+	[ "$SOURCE_DATE_EPOCH" = "$epoch" ]; \
+	find /target -newer /target/usr/local/go -exec sh -c 'ls -ld "$@" && exit "$#"' -- '{}' +
+
+
+
+
+##### MAIN IMAGE #####
+FROM ubuntu:22.04
+
+## nodejs - https://github.com/nodejs/docker-node/blob/1ef28c2d9777d354513929cf85bca4d6fdac0dc3/23/bullseye-slim/Dockerfile
+RUN groupadd --gid 1000 node \
+  && useradd --uid 1000 --gid node --shell /bin/bash --create-home node
+
+ENV NODE_VERSION 23.0.0
+
+RUN ARCH= OPENSSL_ARCH= && dpkgArch="$(dpkg --print-architecture)" \
+    && case "${dpkgArch##*-}" in \
+      amd64) ARCH='x64' OPENSSL_ARCH='linux-x86_64';; \
+      ppc64el) ARCH='ppc64le' OPENSSL_ARCH='linux-ppc64le';; \
+      s390x) ARCH='s390x' OPENSSL_ARCH='linux*-s390x';; \
+      arm64) ARCH='arm64' OPENSSL_ARCH='linux-aarch64';; \
+      armhf) ARCH='armv7l' OPENSSL_ARCH='linux-armv4';; \
+      i386) ARCH='x86' OPENSSL_ARCH='linux-elf';; \
+      *) echo "unsupported architecture"; exit 1 ;; \
+    esac \
+    && set -ex \
+    # libatomic1 for arm
+    && apt-get update && apt-get install -y ca-certificates curl wget gnupg dirmngr xz-utils libatomic1 --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/* \
+    # use pre-existing gpg directory, see https://github.com/nodejs/docker-node/pull/1895#issuecomment-1550389150
+    && export GNUPGHOME="$(mktemp -d)" \
+    # gpg keys listed at https://github.com/nodejs/node#release-keys
+    && for key in \
+      C0D6248439F1D5604AAFFB4021D900FFDB233756 \
+      4ED778F539E3634C779C87C6D7062848A1AB005C \
+      141F07595B7B3FFE74309A937405533BE57C7D57 \
+      74F12602B6F1C4E913FAA37AD3A89613643B6201 \
+      DD792F5973C6DE52C432CBDAC77ABFA00DDBF2B7 \
+      CC68F5A3106FF448322E48ED27F5E38D5B0A215F \
+      8FCCA13FEF1D0C2E91008E09770F7A9A5AE15600 \
+      890C08DB8579162FEE0DF9DB8BEAB4DFCF555EF4 \
+      C82FA3AE1CBEDC6BE46B9360C43CEC45C17AB93C \
+      108F52B48DB57BB0CC439B2997B01419BD92F80A \
+      A363A499291CBBC940DD62E41F10027AF002F8B0 \
+    ; do \
+      gpg --batch --keyserver hkps://keys.openpgp.org --recv-keys "$key" || \
+      gpg --batch --keyserver keyserver.ubuntu.com --recv-keys "$key" ; \
+    done \
+    && curl -fsSLO --compressed "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-$ARCH.tar.xz" \
+    && curl -fsSLO --compressed "https://nodejs.org/dist/v$NODE_VERSION/SHASUMS256.txt.asc" \
+    && gpg --batch --decrypt --output SHASUMS256.txt SHASUMS256.txt.asc \
+    && gpgconf --kill all \
+    && rm -rf "$GNUPGHOME" \
+    && grep " node-v$NODE_VERSION-linux-$ARCH.tar.xz\$" SHASUMS256.txt | sha256sum -c - \
+    && tar -xJf "node-v$NODE_VERSION-linux-$ARCH.tar.xz" -C /usr/local --strip-components=1 --no-same-owner \
+    && rm "node-v$NODE_VERSION-linux-$ARCH.tar.xz" SHASUMS256.txt.asc SHASUMS256.txt \
+    # Remove unused OpenSSL headers to save ~34MB. See this NodeJS issue: https://github.com/nodejs/node/issues/46451
+    && find /usr/local/include/node/openssl/archs -mindepth 1 -maxdepth 1 ! -name "$OPENSSL_ARCH" -exec rm -rf {} \; \
+    && apt-mark auto '.*' > /dev/null \
+    && find /usr/local -type f -executable -exec ldd '{}' ';' \
+      | awk '/=>/ { so = $(NF-1); if (index(so, "/usr/local/") == 1) { next }; gsub("^/(usr/)?", "", so); print so }' \
+      | sort -u \
+      | xargs -r dpkg-query --search \
+      | cut -d: -f1 \
+      | sort -u \
+      | xargs -r apt-mark manual \
+    && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \
+    && ln -s /usr/local/bin/node /usr/local/bin/nodejs \
+    # smoke tests
+    && node --version \
+    && npm --version
+
+ENV YARN_VERSION 1.22.22
+
+RUN set -ex \
+  && savedAptMark="$(apt-mark showmanual)" \
+  && apt-get update && apt-get install -y ca-certificates curl wget gnupg dirmngr --no-install-recommends \
+  && rm -rf /var/lib/apt/lists/* \
+  # use pre-existing gpg directory, see https://github.com/nodejs/docker-node/pull/1895#issuecomment-1550389150
+  && export GNUPGHOME="$(mktemp -d)" \
+  && for key in \
+    6A010C5166006599AA17F08146C2130DFD2497F5 \
+  ; do \
+    gpg --batch --keyserver hkps://keys.openpgp.org --recv-keys "$key" || \
+    gpg --batch --keyserver keyserver.ubuntu.com --recv-keys "$key" ; \
+  done \
+  && curl -fsSLO --compressed "https://yarnpkg.com/downloads/$YARN_VERSION/yarn-v$YARN_VERSION.tar.gz" \
+  && curl -fsSLO --compressed "https://yarnpkg.com/downloads/$YARN_VERSION/yarn-v$YARN_VERSION.tar.gz.asc" \
+  && gpg --batch --verify yarn-v$YARN_VERSION.tar.gz.asc yarn-v$YARN_VERSION.tar.gz \
+  && gpgconf --kill all \
+  && rm -rf "$GNUPGHOME" \
+  && mkdir -p /opt \
+  && tar -xzf yarn-v$YARN_VERSION.tar.gz -C /opt/ \
+  && ln -s /opt/yarn-v$YARN_VERSION/bin/yarn /usr/local/bin/yarn \
+  && ln -s /opt/yarn-v$YARN_VERSION/bin/yarnpkg /usr/local/bin/yarnpkg \
+  && rm yarn-v$YARN_VERSION.tar.gz.asc yarn-v$YARN_VERSION.tar.gz \
+  && apt-mark auto '.*' > /dev/null \
+  && { [ -z "$savedAptMark" ] || apt-mark manual $savedAptMark > /dev/null; } \
+  && find /usr/local -type f -executable -exec ldd '{}' ';' \
+    | awk '/=>/ { so = $(NF-1); if (index(so, "/usr/local/") == 1) { next }; gsub("^/(usr/)?", "", so); print so }' \
+    | sort -u \
+    | xargs -r dpkg-query --search \
+    | cut -d: -f1 \
+    | sort -u \
+    | xargs -r apt-mark manual \
+  && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \
+  # smoke test
+  && yarn --version \
+  && rm -rf /tmp/*
+
+## golang - https://github.com/docker-library/golang/blob/89de06f6dd2c4edb29f33bb7270bdcc8000cf58a/1.23/bullseye/Dockerfile
+
+# install cgo-related dependencies
+RUN set -eux; \
+	apt-get update; \
+	apt-get install -y --no-install-recommends \
+		g++ \
+		gcc \
+		libc6-dev \
+		make \
+		pkg-config \
+	; \
+	rm -rf /var/lib/apt/lists/*
+
+ENV GOLANG_VERSION 1.23.2
+
+# don't auto-upgrade the gotoolchain
+# https://github.com/docker-library/golang/issues/472
+ENV GOTOOLCHAIN=local
+
+ENV GOPATH /go
+ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
+# (see notes above about "COPY --link")
+COPY --from=golangbuild --link /target/ /
+RUN mkdir -p "$GOPATH/src" "$GOPATH/bin" && chmod -R 1777 "$GOPATH"
+
+## golang - https://github.com/minixxie/docker-images/blob/main/golang%401.21.0/Dockerfile
+COPY --from=protoc /tmp/protoc.tar.gz /tmp/
+RUN cd /usr && tar xzf /tmp/protoc.tar.gz
+COPY --from=bufbuild/buf:1.26.1 /usr/local/bin/buf /usr/bin/buf
+
+## python
+RUN apt-get update && apt-get install -y python3 python3-pip && apt-get clean
+
+## flutter - https://github.com/cirruslabs/docker-images-flutter/blob/master/sdk/Dockerfile
+COPY --from=ghcr.io/cirruslabs/flutter:3.24.3 /sdks /sdks
+ENV FLUTTER_HOME=/sdks/flutter
+ENV FLUTTER_ROOT=$FLUTTER_HOME
+ENV PATH ${PATH}:${FLUTTER_HOME}/bin:${FLUTTER_HOME}/bin/cache/dart-sdk/bin
+
+
+## Others
+RUN apt-get update && apt-get install -y git curl && apt-get clean
+RUN npm install -g grpc-tools  # grpc_tools_node_protoc
+ADD ./test.sh /test.sh

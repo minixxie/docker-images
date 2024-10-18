@@ -15,3 +15,4 @@ build:
 	cd omniparse && ./build.sh && cd -
 	cd nutlope-ollamacoder && ./build.sh && cd -
 	cd minixxie-ollamacoder && ./build.sh && cd -
+	cd vm && ./build.sh && cd -
