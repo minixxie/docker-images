@@ -13,3 +13,6 @@
 [submodule "minixxie-llamacoder/llamacoder"]
 	path = minixxie-llamacoder/llamacoder
 	url = https://github.com/minixxie/llamacoder.git
+[submodule "bolt.diy/bolt.diy"]
+	path = bolt.diy/bolt.diy
+	url = https://github.com/stackblitz-labs/bolt.diy.git

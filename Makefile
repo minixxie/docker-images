@@ -16,3 +16,4 @@ build:
 	cd nutlope-ollamacoder && ./build.sh && cd -
 	cd minixxie-ollamacoder && ./build.sh && cd -
 	cd vm && ./build.sh && cd -
+	cd bolt.diy && ./build.sh && cd -
