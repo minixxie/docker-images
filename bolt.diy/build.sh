@@ -16,6 +16,7 @@ nerdctl build . \
 	-f ./Dockerfile --platform $platforms \
 	--tag $image:$commitID \
 	--build-arg GIT_COMMIT_ID=$commitID \
+	--target bolt-ai-production \
 	--namespace=k8s.io
 nerdctl tag $image:$commitID $image:latest --namespace=k8s.io
 
