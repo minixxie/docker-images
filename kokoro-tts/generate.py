@@ -18,6 +18,31 @@ voices = {
     'p': ['pf_dora', 'pm_alex', 'pm_santa']
 }
 
+# Dictionary for difficult American English words
+EN_WORD_MAP = {
+    'kokoro': 'ko ko ro',
+    'github': 'git hub',
+    'javascript': 'java script',
+    'kubernetes': 'koo ber net ees',
+    'nginx': 'en jin ex',
+    'ubuntu': 'oo boon too',
+    'linux': 'lin nux',
+    'azure': 'azh ur',
+    'mysql': 'my ess que el',
+    'postgresql': 'post gress que el',
+    'redis': 're diss',
+    'django': 'jan go',
+    'numpy': 'num pie',
+    'scipy': 'sigh pie',
+    'tensorflow': 'ten sor flow',
+    'pytorch': 'pie torch',
+    'ansible': 'an si bul',
+    'maven': 'may ven',
+    'alibaba': 'ah li ba ba',
+    'qwen': 'quin',
+    'doubao': 'dow bao'
+}
+
 # Chinese punctuation mapping (with two spaces after)
 CN_PUNCT_MAP = {
     '，': ',  ',
@@ -40,6 +65,48 @@ CN_PUNCT_MAP = {
     '～': '~  ',
     '…': '...  '
 }
+
+def normalize_english_words(text):
+    """Replace difficult English words with syllable-broken versions (case-insensitive)"""
+    words = text.split()
+    for i, word in enumerate(words):
+        # Normalize different types of apostrophes
+        word_lower = word.lower().replace("'","'").replace("’","'").replace("`","'")
+
+        # Store any trailing punctuation
+        trailing_punctuation = ''
+        if word_lower[-1] in ",.!?;:":
+            trailing_punctuation = word_lower[-1]
+            word_lower = word_lower[:-1]  # Remove the punctuation for normalization
+
+        # Remove possessive forms
+        stripped_word = word_lower.rstrip("'s")  # Remove possessive 's
+        stripped_word = stripped_word.rstrip("s'")  # Remove plural possessive s'
+
+        # Check if the stripped word is in the mapping
+        if stripped_word in EN_WORD_MAP:
+            replacement = EN_WORD_MAP[stripped_word]
+            # Determine if it was possessive or plural
+            if word_lower.endswith("'s"):
+                replacement += "'s"
+            elif word_lower.endswith("s'"):
+                replacement += "s'"
+
+            # Reattach any trailing punctuation
+            replacement += trailing_punctuation
+
+            # Match original case
+            if word.isupper():
+                words[i] = replacement.upper()
+            elif word.istitle():
+                words[i] = replacement.title()
+            else:
+                words[i] = replacement
+        else:
+            # If the word is not in the map, keep it unchanged
+            words[i] = word
+
+    return ' '.join(words)
 
 def normalize_chinese_punctuation(text):
     """Replace Chinese punctuation marks with English ones followed by two spaces"""
@@ -103,10 +170,13 @@ def main():
     voice = voices[args.lang_code][args.voice_index]
     print(f"Selected voice: {voice}")
 
-    # Normalize Chinese punctuation if language is Chinese
+    # Process text based on language
     text = args.text
     if args.lang_code == 'z':
         text = normalize_chinese_punctuation(text)
+        print(f"Normalized text: {text}")
+    elif args.lang_code == 'a':
+        text = normalize_english_words(text)
         print(f"Normalized text: {text}")
 
     # Get output directory
@@ -132,8 +202,11 @@ def main():
 
     for i, (gs, ps, audio) in enumerate(generator):
         print(f"Segment {i}:")
-        # Add padding spaces to the text
-        padded_text = add_padding_spaces(gs)
+        # Add padding spaces to the text and normalize if needed
+        text_to_speak = gs
+        if args.lang_code == 'a':
+            text_to_speak = normalize_english_words(text_to_speak)
+        padded_text = add_padding_spaces(text_to_speak)
         print("Text:", padded_text)
         print("Phonemes:", ps)
         

@@ -2,7 +2,7 @@
 
 set -e
 
-push=0
+push=1
 
 scriptPath=$(cd $(dirname "$0") && pwd)
 
