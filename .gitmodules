@@ -16,3 +16,6 @@
 [submodule "bolt.diy/bolt.diy"]
 	path = bolt.diy/bolt.diy
 	url = https://github.com/stackblitz-labs/bolt.diy.git
+[submodule "ktransformer/ktransformers"]
+	path = ktransformers/ktransformers
+	url = https://github.com/kvcache-ai/ktransformers.git
