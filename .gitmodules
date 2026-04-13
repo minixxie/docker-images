@@ -19,3 +19,6 @@
 [submodule "ktransformer/ktransformers"]
 	path = ktransformers/ktransformers
 	url = https://github.com/kvcache-ai/ktransformers.git
+[submodule "paperclip-ai/paperclip"]
+	path = paperclip-ai/paperclip
+	url = https://github.com/paperclipai/paperclip

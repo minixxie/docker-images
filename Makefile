@@ -18,3 +18,4 @@ build:
 	cd vm && ./build.sh && cd -
 	cd bolt.diy && ./build.sh && cd -
 	cd kokoro-tts && ./build.sh && cd -
+	cd paperclip-ai && ./build.sh && cd -
