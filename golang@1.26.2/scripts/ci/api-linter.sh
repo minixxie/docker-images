@@ -1,8 +1,5 @@
 #!/bin/bash
 
-scriptPath=$(cd $(dirname "$0") && pwd)
-projectRoot=$(cd "$scriptPath"/../.. && pwd)
-
 # Export buf dependencies to a temp directory so api-linter can resolve proto imports.
 # buf generates/downloads these deps during `buf generate`, so the cache is already warm.
 PROTO_INCLUDE_DIR=$(mktemp -d)
@@ -11,7 +8,7 @@ trap "rm -rf '${PROTO_INCLUDE_DIR}'" EXIT
 buf export buf.build/googleapis/googleapis        --output "${PROTO_INCLUDE_DIR}"
 buf export buf.build/grpc-ecosystem/grpc-gateway  --output "${PROTO_INCLUDE_DIR}"
 
-find "${projectRoot}/pb/" -name "*.proto" | xargs -r \
+find "./pb/" -name "*.proto" | xargs -r \
     bash -c 'if command -v api-linter >/dev/null 2>&1; then
         api-linter "$@"
     else

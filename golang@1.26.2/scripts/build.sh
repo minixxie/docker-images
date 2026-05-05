@@ -2,10 +2,6 @@
 
 set -e
 
-scriptPath=$(cd $(dirname "$0") && pwd)
-
-cd "$scriptPath"/..
-
 if [ "$1" != "" ]; then
 	cmds="./cmd/$1"
 else
