@@ -1,8 +1,5 @@
 #!/bin/bash
 
-scriptPath=$(cd $(dirname "$0") && pwd)
-
-cd "$scriptPath"/.. && \
 go install \
 	google.golang.org/protobuf/cmd/protoc-gen-go \
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc \
