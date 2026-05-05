@@ -35,4 +35,6 @@ ADD ./call-api.sh /usr/bin/call-api.sh
 ADD ./get-request.http /get-request.http
 ADD ./post-request.http /post-request.http
 
+ADD ./scripts /scripts
+
 COPY --from=bufbuild/buf:1.69.0 /usr/local/bin/buf /usr/bin/buf
