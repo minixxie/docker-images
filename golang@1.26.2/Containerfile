@@ -31,10 +31,13 @@ RUN apt-get update && apt-get install -y --allow-unauthenticated apache2-utils &
 COPY --from=protoc /tmp/protoc.tar.gz /tmp/
 RUN cd /usr && tar xzf /tmp/protoc.tar.gz
 
-ADD ./call-api.sh /usr/bin/call-api.sh
+ADD ./call-api.sh /usr/local/bin/call-api.sh
 ADD ./get-request.http /get-request.http
 ADD ./post-request.http /post-request.http
 
-ADD ./scripts /scripts
+ADD ./scripts/install-protoc-plugins.sh /usr/local/bin/install-protoc-plugins.sh
+ADD ./scripts/build.sh /usr/local/bin/build.sh
+ADD ./scripts/ci/api-linter.sh /usr/local/bin/api-linter.sh
+
 
 COPY --from=bufbuild/buf:1.69.0 /usr/local/bin/buf /usr/bin/buf
