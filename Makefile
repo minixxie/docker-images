@@ -20,3 +20,4 @@ build:
 	cd bolt.diy && ./build.sh && cd -
 	cd kokoro-tts && ./build.sh && cd -
 	cd paperclip-ai && ./build.sh && cd -
+	cd protoc-gen-grpc-java && ./build.sh && cd -

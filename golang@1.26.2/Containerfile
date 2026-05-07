@@ -39,5 +39,5 @@ ADD ./scripts/install-protoc-plugins.sh /usr/local/bin/install-protoc-plugins.sh
 ADD ./scripts/build.sh /usr/local/bin/build.sh
 ADD ./scripts/ci/api-linter.sh /usr/local/bin/api-linter.sh
 
-
+COPY --from=minixxie/protoc-gen-grpc-java:1.81.0 /usr/local/bin/protoc-gen-grpc-java /usr/local/bin/protoc-gen-grpc-java
 COPY --from=bufbuild/buf:1.69.0 /usr/local/bin/buf /usr/bin/buf

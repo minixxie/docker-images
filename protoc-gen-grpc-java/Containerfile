@@ -1,0 +1,31 @@
+#FROM openjdk:17-jdk-slim AS builder
+FROM --platform=$TARGETPLATFORM eclipse-temurin:17-jdk AS builder
+ARG TARGETPLATFORM
+ARG TARGETARCH
+ARG BUILDPLATFORM
+
+WORKDIR /workspace
+# install small utilities
+RUN apt-get update && apt-get install -y curl ca-certificates --no-install-recommends && rm -rf /var/lib/apt/lists/*
+
+# Download a prebuilt protoc-gen-grpc-java binary from Maven Central instead
+# of building the whole grpc-java project. Select classifier from TARGETARCH.
+ARG GRPC_JAVA_VERSION=1.81.0
+ARG TARGETARCH
+RUN case "${TARGETARCH}" in \
+  amd64|x86_64) classifier=linux-x86_64 ;; \
+  arm64|aarch64) classifier=linux-aarch_64 ;; \
+  ppc64le) classifier=linux-ppcle_64 ;; \
+  s390x) classifier=linux-s390_64 ;; \
+  *) classifier=linux-x86_64 ;; \
+  esac && \
+  echo "Downloading protoc-gen-grpc-java for ${classifier}" && \
+  curl -fSL "https://repo1.maven.org/maven2/io/grpc/protoc-gen-grpc-java/${GRPC_JAVA_VERSION}/protoc-gen-grpc-java-${GRPC_JAVA_VERSION}-${classifier}.exe" -o /usr/local/bin/protoc-gen-grpc-java && \
+  chmod +x /usr/local/bin/protoc-gen-grpc-java
+
+# Use a small Debian image with glibc so the prebuilt binary's shared
+# library dependencies (librt, libc, etc.) are available.
+FROM debian:stable-slim
+# copy launcher produced by gradle installDist
+COPY --from=builder /usr/local/bin/protoc-gen-grpc-java /usr/local/bin/protoc-gen-grpc-java
+RUN chmod +x /usr/local/bin/protoc-gen-grpc-java
