@@ -21,3 +21,5 @@ build:
 	cd kokoro-tts && ./build.sh && cd -
 	cd paperclip-ai && ./build.sh && cd -
 	cd protoc-gen-grpc-java && ./build.sh && cd -
+	cd protoc-gen-grpc && ./build.sh && cd -
+	cd kuikly-base && ./build.sh && cd -
