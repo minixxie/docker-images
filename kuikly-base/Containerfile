@@ -25,7 +25,9 @@ RUN mkdir -p /opt/android-sdk/cmdline-tools && \
 RUN yes | sdkmanager --licenses > /dev/null 2>&1 && \
     sdkmanager "platform-tools" \
                "platforms;android-34" \
+               "platforms;android-35" \
                "build-tools;34.0.0" \
+               "build-tools;35.0.0" \
                "ndk;25.2.9519653"
 
 # Install Node.js for web build tools
@@ -34,9 +36,9 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
     npm install -g yarn
 
 # Install Gradle
-RUN wget -q https://services.gradle.org/distributions/gradle-8.5-bin.zip -O /tmp/gradle.zip && \
+RUN wget -q https://services.gradle.org/distributions/gradle-8.12-bin.zip -O /tmp/gradle.zip && \
     unzip -q /tmp/gradle.zip -d /opt && \
-    ln -s /opt/gradle-8.5/bin/gradle /usr/local/bin/gradle && \
+    ln -s /opt/gradle-8.12/bin/gradle /usr/local/bin/gradle && \
     rm /tmp/gradle.zip
 
 # Set Gradle JVM args to increase memory
