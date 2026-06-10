@@ -1,3 +1,5 @@
+FROM --platform=$TARGETPLATFORM bellsoft/liberica-native-image-kit-container:jdk-25-nik-25-glibc AS nik-provider
+
 FROM --platform=$TARGETPLATFORM eclipse-temurin:21-jdk-jammy
 ARG TARGETPLATFORM
 ARG TARGETARCH
@@ -6,6 +8,9 @@ ARG BUILDPLATFORM
 ENV ANDROID_HOME=/opt/android-sdk \
     ANDROID_SDK_ROOT=/opt/android-sdk \
     PATH=$PATH:/opt/android-sdk/cmdline-tools/latest/bin:/opt/android-sdk/platform-tools
+
+# Copy Liberica NIK 25 into a standard location so Gradle toolchain finds it
+COPY --from=nik-provider /usr/lib/jvm/liberica-nik-25-25 /usr/lib/jvm/liberica-nik-25-25
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \
