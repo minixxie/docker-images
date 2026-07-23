@@ -22,4 +22,5 @@ build:
 	cd paperclip-ai && ./build.sh && cd -
 	cd protoc-gen-grpc-java && ./build.sh && cd -
 	cd protoc-gen-grpc && ./build.sh && cd -
+	cd colibri-i && ./build.sh && cd -
 	cd kuikly-base && ./build.sh && cd -

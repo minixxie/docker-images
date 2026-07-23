@@ -22,3 +22,6 @@
 [submodule "paperclip-ai/paperclip"]
 	path = paperclip-ai/paperclip
 	url = https://github.com/paperclipai/paperclip
+[submodule "colibri-i/colibri"]
+	path = colibri-i/colibri
+	url = https://github.com/JustVugg/colibri.git
